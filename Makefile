@@ -1,4 +1,4 @@
-SLUG = blank
+SLUG = match_case
 
 SLIDE_HTML = $(SLUG).html
 ZIP_FILE = $(SLUG).zip
