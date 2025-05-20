@@ -98,6 +98,7 @@ from cogutil import *
         
         # ... etc
     </pre>
+    <p>New soft keywords</p>
 </div>
 
 <div class="slide">
@@ -108,7 +109,8 @@ from cogutil import *
     match command.split():  # ['go', 'north']
 
         case [action, obj]:
-            # action == 'go'; obj == 'north'
+            # action == 'go'
+            # obj == 'north'
             ...             
     </pre>
 </div>
@@ -288,7 +290,7 @@ from cogutil import *
             # A "Close with comment" comment.
             pass
 
-        case {"sender": {"login": who}} if who == our_username():
+        case {"sender": {"login": who}} if who == my_name:
             # A comment from ourselves.
             pass
 
