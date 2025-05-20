@@ -14,7 +14,7 @@ from cogutil import *
 ]]]-->
 <!--[[[end]]]-->
 <head>
-    <title>Prez Title</title>
+    <title>match / case</title>
     <meta charset="utf-8" />
 
     <!-- *** Includes {{{ -->
@@ -86,11 +86,27 @@ from cogutil import *
 
 
 <div class="slide">
+    <h1>Basic syntax</h1>
+    <pre class="python">
+    match some_value:
+
+        case pattern1:
+            # ... code ...
+        
+        case pattern2:
+            # ... code ...
+        
+        # ... etc
+    </pre>
+</div>
+
+<div class="slide">
     <h1>Matching a sequence</h1>
     <pre class="python">
     command = "go north"
 
     match command.split():  # ['go', 'north']
+
         case [action, obj]:
             # action == 'go'; obj == 'north'
             ...             
@@ -121,63 +137,194 @@ from cogutil import *
             quit_game()
 
         case ["look"]:
-            current_room.describe()
+            room.describe()
 
         case ["get", obj]:
-            character.get(obj, current_room)
+            character.get(obj, room)
 
         case ["go", direction]:
-            current_room = current_room.neighbor(direction)
+            room = room.neighbor(direction)
     </pre>
-</div>
-
-<div class="slide">
-    <h1>Included code</h1>
-    <!--[[[cog include_file("sample.py") ]]] {{{ -->
-    <pre class='python'>
-    def f(n):
-        print("Look!: {}".format(n))
-        if n &gt; 0:
-            f(n-1)
-
-    f(4)
-    </pre>
-    <!--[[[end]]] }}}-->
-    <!--[[[cog include_file("sample.out") ]]] {{{ -->
-    <pre class='text'>
-    Look!: 4
-    Look!: 3
-    Look!: 2
-    Look!: 1
-    Look!: 0
-    </pre>
-    <!--[[[end]]] }}}-->
 </div>
 
 
 <div class="slide">
-    <h1>Smaller code</h1>
-    <!--[[[cog include_file("sample.py", classes="small") ]]] {{{ -->
-    <pre class='python small'>
-    def f(n):
-        print("Look!: {}".format(n))
-        if n &gt; 0:
-            f(n-1)
+    <h1>Default case</h1>
+    <pre class="python">
+    match command.split():
+        
+        case ["quit"]: ...
 
-    f(4)
+        case ["look"]: ...
+
+        case ["get", obj]: ...
+
+        case ["go", direction]: ...
+
+        case _:
+            print(f"I don't understand {command!r}")
     </pre>
-    <!--[[[end]]] }}}-->
-    <!--[[[cog include_file("sample.out", classes="small") ]]] {{{ -->
-    <pre class='text small'>
-    Look!: 4
-    Look!: 3
-    Look!: 2
-    Look!: 1
-    Look!: 0
-    </pre>
-    <!--[[[end]]] }}}-->
 </div>
 
+
+<div class="slide">
+    <h1>Alternatives</h1>
+    <pre class="python">
+    match command.split():
+
+        case ["north"] | ["go", "north"]:
+            room = room.neighbor("north")
+
+        case ["get", o] | ["pick", "up", o] | ["pick", o, "up"]:
+            ... # Code for picking up object o
+    </pre>
+</div>
+
+
+<div class="slide">
+    <h1>Capturing sub-patterns</h1>
+    <pre class="python">
+    match command.split():
+
+        case ["go", ("north" | "south" | "east" | "west")]:
+            # how do I know which direction to go?
+    </pre>
+    <pre class="python">
+    match command.split():
+
+        case ["go", ("north" | "south" | "east" | "west") as d]:
+            room = room.neighbor(d)
+    </pre>
+</div>
+
+
+<div class="slide">
+    <h1>Conditions</h1>
+    <pre class="python">
+    match command.split():
+
+        case ["go", direction] if direction in room.exits:
+            room = room.neighbor(direction)
+
+        case ["go", _]:
+            print("Sorry, you can't go that way")
+    </pre>
+</div>
+
+
+<div class="slide">
+    <h1>Matching mappings</h1>
+    <pre class="python">
+    match action:
+
+        case {"text": message, "color": c}:
+            ui.set_text_color(c)
+            ui.display(message)
+
+        case {"sleep": duration}:
+            ui.wait(duration)
+
+        case {"sound": url, "format": "ogg"}:
+            ui.play(url)
+
+        case {"sound": _, "format": _}:
+            warning("Unsupported audio format")
+    </pre>
+</div>
+
+
+<div class="slide">
+    <h1>Matching via classes</h1>
+    <pre class="python">
+    match event:
+
+        case Click(position=(x, y)):
+            handle_click_at(x, y)
+
+        case KeyPress("Q") | Quit():
+            game.quit()
+
+        case KeyPress("up arrow"):
+            game.go_north()
+
+        case KeyPress():
+            pass # Ignore other keystrokes
+
+        case other_event:
+            raise ValueError(f"Unrecognized: {other_event}")
+    </pre>
+</div>
+
+
+<div class="slide">
+    <h1>Intricate</h1>
+    <pre class="python">
+    match points:
+        case []:
+            print("No points")
+        case [Point(0, 0)]:
+            print("The origin")
+        case [Point(x, y)]:
+            print(f"Single point {x}, {y}")
+        case [Point(0, y1), Point(0, y2)]:
+            print(f"Two on the Y axis at {y1}, {y2}")
+        case [Point(x, y)] if x == y:
+            print("One on the diagonal")
+        case _:
+            print("Something else")
+    </pre>
+</div>
+
+
+<div class="slide">
+    <h1>Real-world: GitHub hook</h1>
+    <pre class="python">
+    match github_event:
+
+        case {
+                "issue": {"closed_at": closed},
+                "comment": {"created_at": commented},
+            } if closed == commented:
+            # A "Close with comment" comment.
+            pass
+
+        case {"sender": {"login": who}} if who == our_username():
+            # A comment from ourselves.
+            pass
+
+        case {"issue": {"pull_request": _}}:
+            # A pull request comment.
+            return process_pull_request_comment(event)
+    </pre>
+</div>
+
+
+<div class="slide">
+    <h1>BUT!</h1>
+    <pre class="python">
+    BLUE, GREEN = 1, 2
+
+    match deployment_type:
+
+        case BLUE:
+            ...
+
+        case GREEN:
+            ...
+    </pre>
+    <pre>
+    SyntaxError:
+    name capture 'BLUE' makes remaining patterns unreachable
+    </pre>
+</div>
+
+<!--
+<div class="slide">
+    <h1>Matching via classes</h1>
+    <pre class="python">
+    </pre>
+</div>
+-->
 
 <div class="slide title" data-layout="clean">
     <h1 style="padding-top: 0em">Questions?</h1>
